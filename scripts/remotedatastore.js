@@ -3,8 +3,6 @@
   var App = window.App || {};
   var $ = window.jQuery;
 
-  var order_id = "";
-
   function RemoteDataStore(url) {
     if (!url) {
       throw new Error("No remote URL supplied.");
@@ -15,9 +13,6 @@
   RemoteDataStore.prototype.add = function(key, val) {
     $.post(this.serverUrl, val, function(serverResponse) {
       console.log(serverResponse);
-      order_id = serverResponse.id;
-
-      return order_id;
     });
   };
 
@@ -36,12 +31,18 @@
   };
 
   RemoteDataStore.prototype.remove = function(key) {
-    $.ajax(this.serverUrl + "/" + order_id, {
-      type: "DELETE"
-    });
-    console.log("Order with email:" + key + " is removed.");
-  };
+    this.getAll((function(serverResponse) {
+      serverResponse.forEach(function(obj) {
+        if (obj.emailAddress == key) {
+          key = obj.id;
+        }
+      });
 
+      $.ajax(this.serverUrl + "/" + key, {
+        type: "DELETE"
+      });
+    }).bind(this));
+  };
   App.RemoteDataStore = RemoteDataStore;
   window.App = App;
 })(window);
